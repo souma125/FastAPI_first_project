@@ -1,14 +1,14 @@
-from fastapi import APIRouter,status,HTTPException,Response
+from fastapi import APIRouter,status,HTTPException,Response,Depends
 import schemas
 from database import conn
-
+import oath2
 router = APIRouter(
     prefix='/blog',
     tags=['Blog']
 )
 
 @router.get('/')
-def all(status=status.HTTP_200_OK):
+def all(status=status.HTTP_200_OK,get_current_user:schemas.User = Depends(oath2.get_current_user)):
     cursor = conn.cursor(buffered=True)
     query = "SELECT b.title,b.body,u.id,u.name,u.email FROM blog as b JOIN user as u ON u.id = b.user_id"
     cursor.execute(query)
@@ -26,7 +26,7 @@ def create(request:schemas.Blog):
    return {"message": "Blog added successfully"}
 
 @router.get('/{id}',status_code=status.HTTP_200_OK)
-def show(id:int,response:Response):
+def show(id:int,response:Response,get_current_user:schemas.User = Depends(oath2.get_current_user)):
    cursor = conn.cursor(buffered=True)
    query = f"SELECT b.title,b.body,u.id,u.name,u.email FROM blog as b LEFT JOIN user as u ON u.id = b.user_id WHERE b.id = {id}"
    cursor.execute(query)
